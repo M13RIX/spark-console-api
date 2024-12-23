@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация S.P.A.R.K. AI</title>
+    <link rel="stylesheet" href="reg-styles.css">
+</head>
+<body>
+<video class="video-background" autoplay muted loop>
+    <source src="your-video.mp4" type="video/mp4">
+    Ваш браузер не поддерживает видео.
+</video>
+<div class="container">
+    <!-- Этап регистрации в контейнере с анимацией переворота карточки -->
+    <div class="question-box" id="step-container">
+        <!-- Этап 1: Ввод электронной почты и проверка кода -->
+        <div id="step-1">
+            <div class="question-content">
+                <h2>Регистрация</h2>
+                <label for="email">Введите вашу почту:</label>
+                <input type="email" id="email" placeholder="example@mail.com" class="input-field">
+                <button id="send-code" class="button">Отправить код</button>
+                <label for="email-code">Введите код из письма:</label>
+                <input type="text" id="email-code" placeholder="Код подтверждения" class="input-field">
+                <button id="verify-code" class="button">Далее</button>
+            </div>
+        </div>
+
+        <!-- Этап 2: Ввод имени пользователя, пароля и данных -->
+        <div id="step-2" style="display: none;">
+            <div class="question-content">
+                <label for="username">Имя пользователя:</label>
+                <input type="text" id="username" placeholder="Введите имя пользователя" class="input-field">
+
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" placeholder="Введите пароль" class="input-field">
+
+                <label for="real-name">Ваше реальное имя:</label>
+                <input type="text" id="real-name" placeholder="Ваше полное имя" class="input-field">
+
+                <label for="gender">Пол:</label>
+                <select id="gender" class="input-field">
+                    <option value="male">Мужской</option>
+                    <option value="female">Женский</option>
+                    <option value="other">Не указан</option>
+                </select>
+
+                <label for="bio">Краткое описание о вас:</label>
+                <textarea id="bio" placeholder="Расскажите немного о себе" class="input-field"></textarea>
+
+                <label for="birthdate">Дата рождения:</label>
+                <input type="date" id="birthdate" class="input-field">
+
+                <label for="assistant-gender">Какой пол вы бы хотели у вашего ИИ:</label>
+                <select id="assistant-gender" class="input-field">
+                    <option value="male">Мужской</option>
+                    <option value="female">Женский</option>
+                </select>
+
+                <button id="next-step" class="button" disabled>Далее</button>
+            </div>
+        </div>
+
+        <!-- Этап 3: Выбор ключа API -->
+        <div id="step-3" style="display: none;">
+            <div class="question-content">
+                <h2>Выберите способ вызова ИИ</h2>
+                <label><input type="radio" name="api-key" id="api-key" value="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" checked> Общий (нестабильный)</label>
+                <label><input type="radio" name="api-key" value="custom"> Свой</label>
+
+                <div id="custom-api-key" style="display: none;">
+                    <label for="api-key-input">Введите ваш API ключ:</label>
+                    <input type="text" id="api-key-input" placeholder="Ваш Groq API ключ" class="input-field">
+                </div>
+
+                <button id="verify-api" class="button">Далее</button>
+            </div>
+        </div>
+
+        <!-- Этап 4: Описание теста -->
+        <div id="step-4" style="display: none;">
+            <div class="question-content">
+                <h2>Почти готово!</h2>
+                <p>Теперь, чтобы ваш Спарк мог лучше подстроиться для вас, вам нужно будет пройти небольшой тест.</p>
+                <p>Все данные зашифрованы, а ключ — ваш пароль)</p>
+                <button id="start-test" class="button">Начать тест</button>
+            </div>
+        </div>
+
+        <div id="step-5" style="display:none;" class="question-box">
+            <div class="question-progress">
+                <span id="question-index">1</span>/<span id="total-questions"></span>
+            </div>
+            <div class="question-content">
+                <p id="question-text"></p>
+            </div>
+            <div class="options">
+                <div id="options-list"></div>
+                <div class="custom-answer">
+                    <input type="text" id="custom-answer" placeholder="Другой ответ..." oninput="checkCustomAnswer()" />
+                </div>
+            </div>
+            <div class="navigation">
+                <button id="prev-btn" onclick="prevQuestion()">Назад</button>
+                <button id="next-btn" onclick="nextQuestion()" disabled>Далее</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Загрузка и финальный экран -->
+    <div class="question-box" id="loading-screen" style="display: none;">
+        <div class="loader"></div>
+        <div class="loading-animation">Настройка параметров, это может занять несколько минут...</div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io('https://sparkwebui-production.up.railway.app/', { transports: ['websocket'], upgrade: false });
+
+    let registrationData = {
+        email: '',
+        username: '',
+        password: '',
+        realName: '',
+        gender: '',
+        bio: '',
+        birthdate: '',
+        assistantName: '',
+        apiKey: '',
+        testResults: []
+    };
+
+    function flipCard(callback) {
+        const questionBox = document.querySelector(".question-box");
+        questionBox.style.animation = "flipOut 0.3s ease forwards";
+
+        setTimeout(() => {
+            callback(); // Execute the callback to update content
+            questionBox.style.animation = "flipIn 0.3s ease";
+        }, 300);
+    }
+
+    // Анимация загрузки
+    function setLoadingState(button, isLoading) {
+        if (isLoading) {
+            button.classList.add('loading');
+            button.disabled = true;
+        } else {
+            button.classList.remove('loading');
+            button.disabled = false;
+        }
+    }
+
+    // Успешная или неудачная проверка
+    function setButtonSuccess(button, success) {
+        button.classList.remove('loading');
+        if (success) {
+            button.classList.add('success');
+        } else {
+            button.classList.add('error');
+        }
+        setTimeout(() => {
+            button.classList.remove('success', 'error');
+            button.disabled = false;
+        }, 1500);
+    }
+
+    // Отправка кода на email
+    document.getElementById('send-code').addEventListener('click', () => {
+        const email = document.getElementById('email').value;
+        const button = document.getElementById('send-code');
+        setLoadingState(button, true);
+
+        socket.emit('email', { email });
+
+        socket.on('email-sent', (data) => {
+            setButtonSuccess(button, data.success);
+        });
+    });
+
+    // Проверка кода
+    document.getElementById('verify-code').addEventListener('click', () => {
+        const code = document.getElementById('email-code').value;
+        const button = document.getElementById('verify-code');
+        setLoadingState(button, true);
+
+        socket.emit('verify-email-code', { code });
+
+        socket.on('email-verified', (data) => {
+            setButtonSuccess(button, data.success);
+            if (data.success) {
+                flipCard(() => {
+                    document.getElementById('step-1').style.display = 'none';
+                    document.getElementById('step-2').style.display = 'block';
+                });
+            }
+        });
+    });
+
+    // Функция для проверки заполненности всех обязательных полей
+    function checkStep1Fields() {
+        const email = document.getElementById('email').value;
+        const code = document.getElementById('email-code').value;
+        registrationData.email = email;
+        console.log(registrationData);
+    }
+
+    function checkStep2Fields() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const realname = document.getElementById('real-name').value;
+        const gender = document.getElementById('gender').value;
+        const bio = document.getElementById('bio').value;
+        const birthdate = document.getElementById('birthdate').value;
+        const assistantGender = document.getElementById('assistant-gender').value;
+        const nextButton = document.getElementById('next-step');
+
+        registrationData.username = username;
+        registrationData.assistantName = assistantGender;
+        registrationData.password = password;
+        registrationData.realName = realname;
+        registrationData.assistantGender = gender;
+        registrationData.gender = gender;
+        registrationData.bio = bio;
+        registrationData.birthdate = birthdate;
+
+        nextButton.disabled = !(username && password && realname && gender && birthdate);
+        console.log(registrationData);
+    }
+
+    function checkStep3Fields() {
+        const apiKeyOption = document.querySelector('input[name="api-key"]:checked').value;
+        const apiKey = document.getElementById('api-key-input').value;
+        registrationData.apiKey = apiKey;
+        console.log(registrationData);
+    }
+
+    document.getElementById('username').addEventListener('input', checkStep2Fields);
+    document.getElementById('password').addEventListener('input', checkStep2Fields);
+    document.getElementById('real-name').addEventListener('input', checkStep2Fields);
+    document.getElementById('bio').addEventListener('input', checkStep2Fields);
+    document.getElementById('birthdate').addEventListener('input', checkStep2Fields);
+    document.getElementById('email').addEventListener('input', checkStep1Fields);
+    document.getElementById('email-code').addEventListener('input', checkStep1Fields);
+    document.getElementById('api-key').addEventListener('input', checkStep3Fields);
+    document.getElementById('api-key-input').addEventListener('input', checkStep3Fields);
+
+    document.getElementById('next-step').addEventListener('click', () => {
+        flipCard(() => {
+            document.getElementById('step-2').style.display = 'none';
+            document.getElementById('step-3').style.display = 'block';
+        });
+    });
+
+
+    // Обработка API ключа
+    document.querySelectorAll('input[name="api-key"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            if (radio.value === 'custom') {
+                document.getElementById('custom-api-key').style.display = 'block';
+            } else {
+                document.getElementById('custom-api-key').style.display = 'none';
+            }
+        });
+    });
+
+    document.getElementById('verify-api').addEventListener('click', () => {
+        const apiKey = document.querySelector('input[name="api-key"]:checked').value === 'custom' ?
+            document.getElementById('api-key-input').value : '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';
+        const button = document.getElementById('verify-api');
+        setLoadingState(button, true);
+
+        registrationData.apiKey = apiKey;
+        console.log(registrationData);
+
+        socket.emit('verify-api-key', { apiKey });
+
+        socket.on('api-verified', (data) => {
+            setButtonSuccess(button, data.success);
+            if (data.success) {
+                flipCard(() => {
+                    document.getElementById('step-3').style.display = 'none';
+                    document.getElementById('step-4').style.display = 'block';
+                });
+            }
+        });
+    });
+
+    // Начало теста
+    document.getElementById('start-test').addEventListener('click', () => {
+        document.getElementById('step-container').style.background = 0;
+        document.getElementById('step-container').style.backdropFilter = 'none';
+        document.getElementById('step-container').style.border = 'none';
+        document.getElementById('step-container').style.boxShadow = 'none';
+        document.getElementById('step-4').style.display = 'none';
+        document.getElementById('step-5').style.display = 'block';
+    });
+
+    // Отправка данных после регистрации и завершения теста
+    function submitRegistration() {
+        registrationData.testResults = questions.map(q => ({
+            question: q.question,
+            answer: q.selected
+        }));
+
+        document.getElementById('step-5').style.display = 'none';
+        document.getElementById('loading-screen').style.display = 'block';
+
+        localStorage.setItem('userData', JSON.stringify(registrationData));
+
+        // Отправляем данные на сервер
+        socket.emit('registration-data', JSON.stringify(registrationData));
+
+        console.log(registrationData)
+    }
+
+    socket.on('successful-registration', (data) => {
+        localStorage.setItem('userData', JSON.stringify(data));
+        window.location.href = '/';
+    });
+
+    // Функция завершения всех шагов и отправки данных
+    function finishSettings() {
+        document.querySelector('.container').style.display = 'none';
+        document.getElementById('loading-screen').style.display = 'flex';
+        document.getElementById('loading-screen').style.display = 'none';
+        document.getElementById('final-screen').style.display = 'flex';
+
+        setTimeout(() => {
+            document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('final-screen').style.display = 'flex';
+        }, 3000); // Имитация времени обработки данных
+    }
+
+    // Интеграция теста
+    const questions = [
+        {
+            question: "Как вы обычно реагируете на сложные ситуации?",
+            options: ["Спокойно и рационально", "Эмоционально, но сдержанно", "Сильно расстраиваюсь", "Стараюсь сохранять позитив"],
+        },
+        {
+            question: "Что для вас важно в общении с другими людьми?",
+            options: ["Прямота и честность", "Поддержка и сочувствие", "Умение рассмешить", "Спокойствие и уверенность"],
+        },
+        {
+            question: "Какой стиль общения вам ближе?",
+            options: ["Формальный", "Дружеский", "Легкий и шутливый", "Расслабленный"],
+        },
+        {
+            question: "Что вас может раздражать в общении с ИИ?",
+            options: ["Излишняя формальность", "Недостаток эмпатии", "Слишком много шуток", "Навязчивость"],
+        },
+        {
+            question: "Какую роль вы чаще играете в команде?",
+            options: ["Лидер", "Советник", "Мотиватор", "Исполнитель"],
+        },
+        {
+            question: "Как бы вы описали свою личность?",
+            options: ["Интроверт", "Экстраверт", "Амбиверт", "Зависит от ситуации"],
+        },
+        {
+            question: "Какую информацию вам предпочтительно получать?",
+            options: ["Факты и данные", "Мнения и точки зрения", "Рекомендации и советы", "Новости и обновления"],
+        },
+        {
+            question: "Как вы предпочитаете получать информацию?",
+            options: ["Кратко и по делу", "С подробным объяснением", "Через примеры и истории", "Через визуальные представления"],
+        },
+        {
+            question: "Какой у вас уровень оптимизма?",
+            options: ["Оптимист", "Пессимист", "Реалист", "Зависит от ситуации"],
+        },
+        {
+            question: "Какие эмоции вам ближе?",
+            options: ["Радость и счастье", "Спокойствие и удовлетворенность", "Волнение и вдохновение", "Эмпатия и сочувствие"],
+        },
+        {
+            question: "Как вы оцениваете свою креативность?",
+            options: ["Высокая", "Средняя", "Низкая", "Зависит от задачи"],
+        },
+        {
+            question: "Насколько для вас важна поддержка других?",
+            options: ["Очень важна", "Важно, но не всегда", "Не особо важно", "Предпочитаю справляться самостоятельно"],
+        },
+        {
+            question: "Какой тип взаимодействия вам нравится с ИИ?",
+            options: ["Формальный", "Дружеский", "Интерактивный", "Консультативный"],
+        },
+        {
+            question: "Как бы вы предпочли настроить ИИ?",
+            options: ["Максимум эмпатии", "Сбалансированный подход", "Минимум эмоций", "Только факты"],
+        },
+        {
+            question: "Что вас может больше всего раздражать в поведении ИИ?",
+            options: ["Излишняя болтливость", "Медленная реакция", "Отсутствие эмпатии", "Слишком много советов"],
+        },
+        {
+            question: "Насколько вам важен уровень знаний ИИ?",
+            options: ["Максимальный", "Сбалансированный", "Зависит от ситуации", "Минимальный (только базовые ответы)"],
+        },
+        {
+            question: "Насколько вы доверяете ИИ?",
+            options: ["Полностью", "Частично", "С осторожностью", "Не доверяю"],
+        },
+        {
+            question: "Какую роль вы хотели бы, чтобы ИИ играл в вашей жизни?",
+            options: ["Советник", "Ассистент", "Партнер", "Друг"],
+        },
+    ];
+
+    let currentQuestion = 0;
+    const totalQuestions = questions.length;
+
+    document.getElementById("total-questions").innerText = totalQuestions;
+
+    function showQuestion(index) {
+        const questionElement = document.getElementById("question-text");
+        const optionsList = document.getElementById("options-list");
+
+        questionElement.textContent = questions[index].question;
+        optionsList.innerHTML = ""; // Clear previous options
+
+        questions[index].options.forEach(option => {
+            const optionButton = document.createElement("button");
+            optionButton.className = "option-button";
+            optionButton.textContent = option;
+            optionButton.onclick = () => selectOption(option, optionButton);
+            optionsList.appendChild(optionButton);
+        });
+
+        document.getElementById("custom-answer").value = ""; // Clear custom answer field
+        document.getElementById("question-index").innerText = index + 1;
+        updateNavigationButtons();
+    }
+
+    function selectOption(option, buttonElement) {
+        // Сохраняем выбранный ответ для текущего вопроса
+        questions[currentQuestion].selected = option;
+
+        // Подсвечиваем выбранный вариант
+        const allButtons = document.querySelectorAll(".option-button");
+        allButtons.forEach(button => button.classList.remove("selected"));
+        buttonElement.classList.add("selected");
+
+        // Включаем кнопку "Далее"
+        document.getElementById("next-btn").disabled = false;
+    }
+
+    function checkCustomAnswer() {
+        const customAnswer = document.getElementById("custom-answer").value;
+        if (customAnswer) {
+            questions[currentQuestion].selected = customAnswer;
+            document.getElementById("next-btn").disabled = false;
+        } else {
+            document.getElementById("next-btn").disabled = true;
+        }
+    }
+
+    function nextQuestion() {
+        if (currentQuestion < totalQuestions - 1) {
+            currentQuestion++;
+            flipCard(() => showQuestion(currentQuestion)); // Trigger flip animation
+        } else {
+            // Все вопросы пройдены, отправляем результаты
+            submitRegistration();
+        }
+    }
+
+    function prevQuestion() {
+        if (currentQuestion > 0) {
+            currentQuestion--;
+            flipCard(() => showQuestion(currentQuestion)); // Trigger flip animation
+        }
+    }
+
+    function updateNavigationButtons() {
+        document.getElementById("prev-btn").disabled = currentQuestion === 0;
+        document.getElementById("next-btn").disabled = !questions[currentQuestion].selected;
+        document.getElementById("next-btn").textContent = currentQuestion === totalQuestions - 1 ? "Завершить" : "Далее";
+    }
+    document.getElementById('api-key-input').value = "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";
+
+    // Инициализация первого вопроса
+    showQuestion(currentQuestion);
+</script>
+</body>
+</html>

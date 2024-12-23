@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_Слой_2" data-name="Слой_2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 178 178">
+    <defs>
+        <style>
+            .cls-1 {
+            fill: url(#_Безымянный_градиент_313);
+            }
+
+            .cls-2 {
+            fill: url(#_Безымянный_градиент_190);
+            filter: url(#drop-shadow-1);
+            stroke: url(#_Безымянный_градиент_223);
+            stroke-miterlimit: 10;
+            stroke-width: 2px;
+            }
+        </style>
+        <linearGradient id="_Безымянный_градиент_190" x1="52.29" y1="133.46" x2="111.71" y2="30.54" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#fff" stop-opacity=".8"/>
+            <stop offset=".93" stop-color="#fff" stop-opacity=".34"/>
+            <stop offset=".99" stop-color="#fff" stop-opacity=".32"/>
+            <stop offset="1" stop-color="#fff" stop-opacity=".04"/>
+            <stop offset="1" stop-color="#fff"/>
+        </linearGradient>
+        <linearGradient id="_Безымянный_градиент_223" x1="51.79" y1="134.33" x2="112.21" y2="29.67" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#fff" stop-opacity=".6"/>
+            <stop offset="1" stop-color="#fff" stop-opacity=".8"/>
+        </linearGradient>
+        <filter id="drop-shadow-1">
+            <feOffset dx="7" dy="7"/>
+            <feGaussianBlur result="blur" stdDeviation="10"/>
+            <feFlood flood-color="#000" flood-opacity=".1"/>
+            <feComposite in2="blur" operator="in"/>
+            <feComposite in="SourceGraphic"/>
+        </filter>
+        <linearGradient id="_Безымянный_градиент_313" x1="48" y1="79" x2="116" y2="79" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#000" stop-opacity=".5"/>
+            <stop offset="1" stop-color="#000" stop-opacity=".8"/>
+        </linearGradient>
+    </defs>
+    <g>
+        <rect class="cls-2" x="25" y="25" width="114" height="114" rx="50.41" ry="50.41"/>
+        <path class="cls-1" d="M82,43c-1.2,0-2.39.46-3.27,1.37l-29.55,30.75c-1.56,1.62-1.57,4.1-.03,5.74l.24.25c.88.93,2.09,1.4,3.3,1.4s2.39-.46,3.27-1.37l13.88-14.44c.92-.96,2.09-1.38,3.24-1.38,2.28,0,4.48,1.69,4.48,4.27v41.16c0,2.35,1.99,4.26,4.45,4.26s4.45-1.91,4.45-4.26v-41.16c0-2.58,2.2-4.27,4.48-4.27,1.15,0,2.32.43,3.24,1.38l13.88,14.44c.88.92,2.08,1.37,3.27,1.37s2.42-.47,3.3-1.4l.24-.25c1.54-1.63,1.53-4.12-.03-5.74l-29.55-30.75c-.88-.92-2.08-1.37-3.27-1.37h0Z"/>
+    </g>
+</svg>

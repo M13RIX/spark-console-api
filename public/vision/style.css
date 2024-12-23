@@ -1,0 +1,161 @@
+body {
+    margin: 0;
+    font-family: sans-serif;
+    background-color: #121212; /* Темный фон */
+    color: #e0e0e0; /* Светлый текст */
+    overflow: hidden; /* Предотвращает появление полос прокрутки */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.spark-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+}
+
+.spark-visualizer {
+    position: relative;
+    width: 70vh; /* Меньший размер для большей интимности */
+    height: 70vh;
+}
+
+.camera-feed-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%; /* Круглая форма для "глаза" */
+    overflow: hidden;
+    box-shadow: 0 0 20px rgba(100, 149, 237, 0.6); /* Мягкое голубое свечение */
+    transition: box-shadow 0.5s ease-in-out;
+}
+
+.camera-feed-container:hover {
+    box-shadow: 0 0 30px rgba(100, 149, 237, 0.8); /* Усиление свечения при наведении */
+}
+
+#camera-preview {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: contrast(127%);
+    -webkit-filter: contrast(127%);
+    -moz-filter: contrast(127%);
+}
+
+.attention-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    background-color: #ffcc00; /* Желтый индикатор внимания */
+    border-radius: 50%;
+    box-shadow: 0 0 5px #ffcc00;
+    opacity: 0;
+    animation: blink 1s infinite alternate; /* Анимация мигания */
+}
+
+.camera-feed-container.listening .attention-indicator {
+    opacity: 1;
+}
+
+.emotion-display {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(100, 149, 237, 0.2); /* Полупрозрачный фон для эмоций */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.emotion-icon {
+    width: 60%;
+    height: 60%;
+    background-color: #6495ed; /* Голубой цвет эмоций по умолчанию */
+    border-radius: 50%;
+    transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* Примеры "эмоций" - цвет можно менять в зависимости от состояния ИИ */
+.emotion-display.happy .emotion-icon {
+    background-color: #00ff7f; /* Зеленый для радости */
+    transform: scale(1.2);
+}
+
+.emotion-display.sad .emotion-icon {
+    background-color: #00bfff; /* Светло-голубой для грусти */
+    transform: scale(0.8);
+}
+
+.emotion-display.thinking .emotion-icon {
+    background-color: #ffa07a; /* Лососевый для размышлений */
+    animation: pulse 1.5s infinite alternate;
+}
+
+.response-overlay {
+    position: absolute;
+    top: 17em;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none; /* Позволяет кликать сквозь оверлей */
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.response-overlay.responding {
+    opacity: 1;
+}
+
+#response-text {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    font-size: 0.7em;
+    text-align: center;
+    max-width: 80%;
+}
+
+.spark-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-light {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background-color: #4caf50; /* Зеленый - активен */
+    box-shadow: 0 0 10px #4caf50;
+}
+
+.status-text {
+    font-size: 1em;
+    color: #bdbdbd;
+}
+
+/* Анимации */
+@keyframes blink {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.1); }
+}

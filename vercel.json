@@ -1,0 +1,32 @@
+{
+  "actions": [
+    {
+      "name": "text",
+      "args": "Вот несколько бесплатных хостингов для node.js:"
+    },
+    {
+      "name": "page summary",
+      "args": ["Free node.js hosting"]
+    },
+    {
+      "name": "image",
+      "args": ["!page"]
+    },
+    {
+      "name": "page summary",
+      "args": ["Free node.js hosting"]
+    },
+    {
+      "name": "image",
+      "args": ["!page"]
+    },
+    {
+      "name": "text",
+      "args": ["Выбирайте по своему усмотрению, но по данным интернета лучшим хостингом является:"]
+    },
+    {
+      "name": "page qe",
+      "args": ["Best free node.js hosting", "What is best free node.js hosting"]
+    }
+  ]
+}

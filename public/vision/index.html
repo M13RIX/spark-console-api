@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.P.A.R.K. Realtime</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="spark-container">
+    <div class="spark-visualizer">
+        <div class="camera-feed-container">
+            <video id="camera-preview" autoplay playsinline muted></video>
+            <canvas id="canvas" width="640" height="480" style="display: none;"></canvas>
+            <div class="attention-indicator"></div>
+            <div class="emotion-display">
+                <div class="emotion-icon"></div>
+            </div>
+        </div>
+        <div class="response-overlay">
+            <p id="response-text"></p>
+        </div>
+    </div>
+    <div class="spark-info">
+        <div class="status-light"></div>
+        <p class="status-text">Активен</p>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web@1.19.2/dist/ort.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ricky0123/vad-web@0.0.19/dist/bundle.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_Слой_2" data-name="Слой_2" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 178 178">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#_Безымянный_градиент_12);
+      }
+
+      .cls-2 {
+        fill: url(#_Безымянный_градиент_190);
+        filter: url(#drop-shadow-1);
+        stroke: url(#_Безымянный_градиент_223);
+        stroke-miterlimit: 10;
+        stroke-width: 2px;
+      }
+    </style>
+    <linearGradient id="_Безымянный_градиент_190" data-name="Безымянный градиент 190" x1="49.58" y1="138.15" x2="114.42" y2="25.85" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".8"/>
+      <stop offset=".93" stop-color="#fff" stop-opacity=".34"/>
+      <stop offset=".99" stop-color="#fff" stop-opacity=".32"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".04"/>
+      <stop offset="1" stop-color="#fff"/>
+    </linearGradient>
+    <linearGradient id="_Безымянный_градиент_223" data-name="Безымянный градиент 223" x1="49.08" y1="139.01" x2="114.92" y2="24.99" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff" stop-opacity=".6"/>
+      <stop offset="1" stop-color="#fff" stop-opacity=".8"/>
+    </linearGradient>
+    <filter id="drop-shadow-1" filterUnits="userSpaceOnUse">
+      <feOffset dx="7" dy="7"/>
+      <feGaussianBlur result="blur" stdDeviation="10"/>
+      <feFlood flood-color="#000" flood-opacity=".1"/>
+      <feComposite in2="blur" operator="in"/>
+      <feComposite in="SourceGraphic"/>
+    </filter>
+    <linearGradient id="_Безымянный_градиент_12" data-name="Безымянный градиент 12" x1="82" y1="47" x2="82" y2="115" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#000" stop-opacity=".5"/>
+      <stop offset="1" stop-color="#000" stop-opacity=".8"/>
+    </linearGradient>
+  </defs>
+  <g id="_Слой_1-2" data-name="Слой_1">
+    <rect class="cls-2" x="25" y="25" width="114" height="114" rx="35.62" ry="35.62"/>
+    <path class="cls-1" d="M82.99,47c-1.02,0-2.04.38-2.85,1.15l-.25.24c-1.86,1.76-1.87,4.8-.03,6.57l14.44,13.88c2.85,2.74,1,7.72-2.88,7.72h-41.16c-2.35,0-4.26,1.99-4.26,4.45s1.91,4.45,4.26,4.45h41.16c3.88,0,5.74,4.98,2.88,7.72l-14.44,13.88c-1.84,1.77-1.83,4.82.03,6.57l.25.24c.81.77,1.83,1.15,2.85,1.15s2.07-.39,2.88-1.17l30.75-29.55c1.83-1.76,1.83-4.78,0-6.54l-30.75-29.55c-.81-.78-1.85-1.17-2.88-1.17h0Z"/>
+  </g>
+</svg>

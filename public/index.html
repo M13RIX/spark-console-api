@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="themes/prism.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Advent+Pro:ital,wdth,wght@0,130.1,500;1,130.1,500&family=Didact+Gothic&display=swap" rel="stylesheet">
+    <title>Чат с ИИ</title>
+</head>
+<body>
+<div class="main-container">
+    <div class="background">
+        <canvas id="blobCanvas"></canvas>
+        <div class="blur-overlay"></div>
+    </div>
+    <div class="sidebar">
+        <span class="profile-name">Spark AI</span>
+        <button id="tab-chat" class="tab-button active">Разговор</button>
+        <button id="tab-smart-search" class="tab-button">Умный Поиск</button>
+        <button id="tab-creativity" class="tab-button">Творчество (Beta)</button>
+        <button id="tab-personality" class="tab-button">Личность</button>
+        <button id="tab-settings" class="tab-button">Настройки</button>
+        <span class="profile-name">1.3 DevBuild 004</span>
+        <button class="logout-button" onclick="logout()"><img src="logout-icon.svg" alt="Logout Icon"></button>
+    </div>
+    <div class="content-container">
+        <div id="chat-container" class="tab-content active">
+            <div id="chat-window" class="chat-window"></div>
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Введите текст...">
+                <button class="svg-button" id="svg-button" aria-label="My SVG Button"><img src="button.svg" alt="My SVG Button"></button>
+            </div>
+            <div id="notification" class="notification hidden">
+                <img src="close-icon.svg" alt="Icon" class="notification-icon">
+                <div class="notification-text">Here is your custom message!</div>
+            </div>
+            <div id="expanded-notification" class="expanded-notification hidden">
+                <button class="close-btn"><img src="close-icon.svg" alt="Close" class="close-icon"></button>
+                <div class="expanded-content">
+                    <img src="icon.svg" alt="Icon" class="expanded-icon">
+                    <div class="expanded-text">Detailed content here...</div>
+                </div>
+            </div>
+            <div id="blur-background" class="blur-background hidden"></div>
+        </div>
+        <div id="personality-container" class="tab-content hidden">
+            <div class="card-wrapper">
+                <div class="card" id="card-1">
+                    <h3>Эмоциональное состояние</h3>
+                    <div class="emotion-scale">
+                        <label>Радость: <span id="joy-value">50%</span></label>
+                        <input type="range" id="joy" min="1" max="100" value="50" disabled>
+                        <label>Гнев: <span id="anger-value">30%</span></label>
+                        <input type="range" id="anger" min="1" max="100" value="30" disabled>
+                        <label>Грусть: <span id="sadness-value">20%</span></label>
+                        <input type="range" id="sadness" min="1" max="100" value="20" disabled>
+                    </div>
+                    <h4>Испытываемые эмоции</h4>
+                    <ul id="emotions-list" class="emotions-list"></ul>
+                    <h4>Психологическое состояние</h4>
+                    <p id="psychological-description">Нейтральное состояние.</p>
+                </div>
+                <div class="card" id="card-2">
+                    <h3>Описание личности</h3>
+                    <div id="personality-description"></div>
+                </div>
+                <div class="card" id="card-3">
+                    <h3>Личный дневник</h3>
+                    <ul id="diary-entries" class="diary-entries"></ul>
+                </div>
+            </div>
+            <div class="controls">
+                <button class="arrow left-arrow"><img src="left-arrow.svg" alt="Left Arrow"></button>
+                <button class="arrow right-arrow"><img src="right-arrow.svg" alt="Right Arrow"></button>
+            </div>
+        </div>
+        <div id="smart-search-container" class="tab-content">
+            <div class="search-header">
+                <img src="smart-search-logo.svg" alt="Smart Search Logo" class="search-logo">
+            </div>
+            <div class="search-input-container">
+                <textarea id="smart-search-input" placeholder="Введите запрос..."></textarea>
+                <button class="search-button" id="smart-search-button"><img src="send-icon.svg" alt="Отправить"></button>
+            </div>
+            <div id="smart-search-result" class="search-result">
+                <div class="result-container">
+                    <!-- 1. Слева: Генерированные ответы ИИ -->
+                    <div class="left-column">
+                        <div class="short-answer">
+                            <div class="short-answer-text">
+                                <p id="short-answer-text">Краткий ответ будет здесь...</p>
+                            </div>
+                            <div class="short-answer-image">
+                                <img src="example-image.svg" alt="Image" id="short-answer-img">
+                            </div>
+                        </div>
+
+                        <div class="detailed-answers">
+
+                    </div>
+
+                    <!-- 2. Справа: Ссылки на сайты с ответами -->
+                    <div class="right-column">
+                        <div id="site-links">
+                            <!-- Ссылки на сайты с ответами -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        <div id="creativity-container" class="tab-content">
+            <div id="playground-chat-window" class="chat-window"></div>
+            <div class="playground-container">
+                <div class="playground-input-panel">
+                    <textarea class="playground-input-field" rows="2" id="playground-user-input" placeholder="Ваше сообщение здесь…"></textarea>
+                    <button class="send-button" id="playground-send-button"><img src="send-icon.svg" alt="Отправить"></button>
+                </div>
+                <div class="buttons-panel" id="playground-panel">
+                    <button class="add-chat-button" id="add-chat-button" onclick="addPlaygroundChat()">+</button>
+                    <button class="add-chat-button" id="remove-chat-button" onclick="deletePlaygroundChat()">×</button>
+                    <div class="buttons-panel" id="playground-button-panel">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="settings-container" class="tab-content">
+            <h2>Настройки пользователя и системы</h2>
+            <form id="settings-form" class="settings-form">
+                <label for="username">Имя пользователя:</label>
+                <input type="text" id="username" name="username" placeholder="Введите имя пользователя">
+                <label for="real-name">Настоящее имя:</label>
+                <input type="text" id="real-name" name="real-name" placeholder="Введите настоящее имя">
+                <label for="gender">Пол:</label>
+                <select id="gender" name="gender">
+                    <option value="unspecified">Не указан</option>
+                    <option value="male">Мужской</option>
+                    <option value="female">Женский</option>
+                </select>
+                <label for="about">Краткое описание:</label>
+                <textarea id="about" name="about" placeholder="Напишите немного о себе"></textarea>
+                <label for="birth-date">Дата рождения:</label>
+                <input type="date" id="birth-date" name="birth-date">
+                <label for="model">Модель ИИ:</label>
+                <select id="model" name="model">
+                    <option value="meta-llama/llama-3.1-70b-instruct:free">По умолчанию (самая стабильная и средняя)</option>
+                    <option value="nousresearch/hermes-3-llama-3.1-405b:free">Самая умная (вы почувствуете, что ваш Spark - не просто машина)</option>
+                    <option value="google/gemma-2-9b-it:free">Самая креативная, больше нацелена на русский язык</option>
+                    <option value="meta-llama/llama-3.2-3b-instruct:free">Самая быстрая, моментальный ответ (но самая "глупая")</option>
+                </select>
+                <div class="api-key-container">
+                    <label for="groq-api-key">Ключ Groq API:</label>
+                    <input type="text" id="groq-api-key" name="groq-api-key" placeholder="Введите API ключ">
+                    <button type="button" id="verify-api-key" class="verify-button">Проверить</button>
+                </div>
+                <button type="submit" class="save-button">Сохранить изменения</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="/socket.io/socket.io.js" defer></script>
+<script src="prism.js"></script>
+<script src="chat-scripts.js" defer></script>
+</body>
+</html>
