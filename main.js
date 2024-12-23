@@ -51,12 +51,6 @@ const client = new OpenAI({
     apiKey: "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"
 });
 
-const togetherApiKey = 'b1d33813a782e133a59ba32e103e75419915b499007c8b6ee1f34c5152dab438';
-const together = new Together({ apiKey: togetherApiKey });
-
-const API_URL = "https://ms-ra-forwarder-lime-iota.vercel.app//api/ra"; // Укажите правильный API URL
-const BEARER_TOKEN = 'Bearer SPARK_AI_1820'; // Укажите правильный токен
-
 function removeUndefined(str) {
     const regex = /undefined/gi;
     return str.replace(regex, '');
