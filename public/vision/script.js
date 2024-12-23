@@ -394,7 +394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             onSpeechEnd: (audio) => {
                 if (!isSpeaking) {
                     isSpeaking = true;
-                    console.log("Речь завершена, обрабатываем аудио...");
+                    console.log("Речь завершена, обрабатываем аудио.s..");
                     stopListening();
                     sendAudioForTranscription(audio);
                 }
