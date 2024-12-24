@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
             // Отправка текста на сервер
-            const response = await fetch("spark-realitme.up.railway.app/" + 'stream-audio', {
+            const response = await fetch("https://spark-realtime-api.up.railway.app/" + 'stream-audio', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log(pair[0] + ', ' + pair[1]);
             }
 
-            const response = await fetch('spark-realitme.up.railway.app/process-image', {
+            const response = await fetch('https://spark-realtime-api.up.railway.app//process-image', {
                 method: 'POST',
                 body: formData,
             });
@@ -405,7 +405,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Initialize VAD
     initVAD();
-    const res = await fetch('spark-realitme.up.railway.app/reset-chat', {
+    const res = await fetch('https://spark-realtime-api.up.railway.app/reset-chat', {
         method: 'POST',
     });
 });
