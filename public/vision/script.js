@@ -354,26 +354,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Кодируем в WAV
         const wavBlob = encodeWav(int16Buffer, 16000); // Пример для 16000 Hz
-        const file = new File([wavBlob], 'audio.wav', {type: 'audio/wav'});
-
-
-        const formData = new FormData();
-        formData.append('model', 'whisper-large-v3-turbo');
-        formData.append('file', file);
-        formData.append('language', "ru");
-        formData.append('response_format', 'verbose_json');
 
         try {
-            const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+            const response = await fetch('https://api.deepgram.com/v1/listen?diarize=true&language=ru&model=nova-2', {
                 method: 'POST',
                 headers: {
-                    Authorization: `Bearer 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`, // Замените на ваш API ключ
+                    Authorization: `Token d61a985354babdc5b8648f69ca08cb5480e37aed`, // Замените на ваш API ключ Deepgram
+                    'Content-Type': 'audio/wav',
                 },
-                body: formData,
+                body: wavBlob,
             });
 
             const result = await response.json();
-            const transcription = result.text || "Ошибка транскрипции.";
+            console.log(JSON.stringify(result))
+            const transcription = result.results?.channels?.[0]?.alternatives?.[0]?.transcript || "Ошибка транскрипции.";
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             capturedImageURL = canvas.toDataURL('image/jpeg');
