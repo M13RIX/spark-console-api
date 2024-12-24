@@ -229,7 +229,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.log(pair[0] + ', ' + pair[1]);
             }
 
-            const response = await fetch('https://spark-realtime-api.up.railway.app//process-image', {
+            const response = await fetch('https://spark-realtime-api.up.railway.app/process-image', {
                 method: 'POST',
                 body: formData,
             });
