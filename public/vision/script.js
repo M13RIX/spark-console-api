@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
 
         } catch (error) {
-            console.error('Ошибка отправки данных:', error);
+            console.error('Ошибка отправки данных: ', error);
             //responseArea.innerText = 'Произошла ошибка при отправке данных на сервер.';
         } finally {
             capturedImageURL = null;
