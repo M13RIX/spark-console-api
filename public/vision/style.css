@@ -29,18 +29,54 @@ body {
     height: 100%;
     border-radius: 50%; /* Круглая форма для "глаза" */
     overflow: hidden;
-    box-shadow: 0 0 20px rgba(100, 149, 237, 0.6); /* Мягкое голубое свечение */
-    transition: box-shadow 0.5s ease-in-out;
+    box-shadow: 0 0 40px rgba(100, 149, 237, 0.6); /* Мягкое голубое свечение */
+    transition: box-shadow 0.5s ease;
 }
 
-.camera-feed-container:hover {
-    box-shadow: 0 0 30px rgba(100, 149, 237, 0.8); /* Усиление свечения при наведении */
+.camera-feed-container.speaking {
+    box-shadow: 0 0 80px rgba(100, 149, 237, 0.7); /* Усиление свечения при наведении */
+}
+
+.camera-feed-container.loading {
+    box-shadow: 0 0 0; /* Усиление свечения при наведении */
+}
+
+.camera-feed-container.listening {
+    box-shadow: 0 0 40px rgba(61, 217, 51, 0.7); /* Усиление свечения при наведении */
+}
+
+.camera-feed-container.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    background-image: radial-gradient(circle at 150% 150%,
+    rgba(255, 204, 0, 0.8) 0%,
+    rgba(255, 204, 0, 0.6) 30%,
+    rgba(255, 204, 0, 0.3) 30%,
+    rgba(255, 204, 0, 0) 50%);
+    animation: rotateGlow 1s ease infinite;
+    mix-blend-mode: color-dodge; /* Осветление для эффекта свечения */
+    z-index: 100; /* Помещаем свечение поверх видео, но под другими элементами при необходимости */
+}
+
+@keyframes rotateGlow {
+    from {
+        transform: rotate(200deg);
+    }
+    to {
+        transform: rotate(-160deg);
+    }
 }
 
 #camera-preview {
     display: block;
     width: 100%;
     height: 100%;
+    z-index: 10;
     object-fit: cover;
     filter: contrast(127%);
     -webkit-filter: contrast(127%);

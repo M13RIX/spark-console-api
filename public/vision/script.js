@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentMainSentenceIndex = 0;
     let currentFastSentenceIndex = 0;
     let isSpeaking = false;
+    let isTalking = false;
     let currentAudio = null;
     let mainStreamEnded = false; // Флаг, чтобы отслеживать окончание потока main
 
@@ -103,6 +104,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         sum += value * value; // Квадрат амплитуды
                     }
 
+                    if (sum > 0.2) {
+                        cameraFeedContainer.classList.add('speaking');
+                    }
+                    else {
+                        cameraFeedContainer.classList.remove('speaking');
+                    }
+
                     if (!audio.paused) {
                         requestAnimationFrame(analyzeAmplitude); // Продолжаем анализ
                     }
@@ -116,7 +124,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await audio.play();
                 audio.addEventListener('timeupdate', () => {
                     const remainingTime = audio.duration - audio.currentTime;
-                    console.log(remainingTime);
                     if (remainingTime <= 1.6 && !audio.actionExecuted) {
                         // Выполняем действие за секунду до завершения
                         audio.actionExecuted = true; // Устанавливаем флаг, чтобы действие выполнялось только один раз
@@ -143,18 +150,33 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    function speak(text, onEndCallback) {
+    function clearString(string) {
+        // Заменяем все '*' на '"'
+        string = string.replaceAll('*', '"');
+
+        // Убираем все комбинации "main:"
+        string = string.replaceAll('main:', '');
+
+        // Убираем все комбинации "fast:"
+        string = string.replaceAll('fast:', '');
+
+        return string;
+    }
+
+    function speak(text, onEndCallback, lastMessage = false) {
         if (isSpeaking) {
             speechSynthesis.cancel();
             console.log("canceled old tts");
         }
-        speechUtterance.text = text;
+        const clearText = clearString(text)
+        speechUtterance.text = clearText;
         //speechSynthesis.speak(speechUtterance);
         isSpeaking = true;
         console.log("start speaking new tts");
-        showResponse(text);
-        tts(text, () => {
+        showResponse(clearText);
+        tts(clearText, () => {
             isSpeaking = false;
+            if (lastMessage) isTalking = false;
             console.log("ended speaking tts");
             responseOverlay.classList.remove('responding');
             if (onEndCallback) {
@@ -171,13 +193,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             speak(mainResponseSentences[currentMainSentenceIndex], () => {
                 currentMainSentenceIndex++;
                 processNextSentence();
-            });
+            }, currentMainSentenceIndex === mainResponseSentences.length - 1);
         } else if (!mainStreamEnded && currentMainSentenceIndex < mainResponseSentences.length) {
             // Пока поток main не закончился, произносим его предложения
             speak(mainResponseSentences[currentMainSentenceIndex], () => {
                 currentMainSentenceIndex++;
                 processNextSentence();
-            });
+            }, currentMainSentenceIndex === mainResponseSentences.length - 1);
         } else if (!mainStreamEnded && currentFastSentenceIndex < fastResponseSentences.length) {
             // Если поток main еще не закончился, и main предложения закончились, произносим fast
             speak(fastResponseSentences[currentFastSentenceIndex], () => {
@@ -242,6 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const decoder = new TextDecoder();
 
             let fullResponse = '';
+            cameraFeedContainer.classList.remove('loading');
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) {
@@ -380,14 +403,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function initVAD() {
         vadInstance = await vad.MicVAD.new({
             onSpeechStart: () => {
-                if (!isSpeaking) {
+                if (!isTalking) {
                     console.log("Речь началась");
+                    cameraFeedContainer.classList.add('listening');
                     startListening();
                 }
             },
             onSpeechEnd: (audio) => {
-                if (!isSpeaking) {
-                    isSpeaking = true;
+                if (!isTalking) {
+                    isTalking = true;
+                    cameraFeedContainer.classList.remove('listening');
+                    cameraFeedContainer.classList.add('loading');
                     console.log("Речь завершена, обрабатываем аудио.s..");
                     stopListening();
                     sendAudioForTranscription(audio);
