@@ -78,7 +78,6 @@ body {
     height: 100%;
     z-index: 10;
     object-fit: cover;
-    filter: contrast(127%);
     -webkit-filter: contrast(127%);
     -moz-filter: contrast(127%);
 }
