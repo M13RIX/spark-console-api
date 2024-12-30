@@ -737,7 +737,7 @@ function formatText(text) {
             block = block
                 .replace(/^##\s*(.*)$/gm, '<h2>$1</h2>') // Заголовки уровня 2
                 .replace(/\*\*(.*?)\*\*/g, '<strong><span class="bold">$1</span></strong>') // Жирный текст
-                .replace(/\$(.*?)\$/g, '<em>$1</em>') // Курсив
+                .replace(/_(.*?)_/g, '<em>$1</em>') // Курсив
                 .replace(/(?<!\*)\*(?!\*)/g, '<span class="bold">  •</span>') // Маркеры
                 .replace(/\n/g, '<br>'); // Переносы строк
 

@@ -1,21 +1,121 @@
 document.addEventListener('DOMContentLoaded', async () => {
     const video = document.getElementById('camera-preview');
     const canvas = document.getElementById('canvas');
-    const responseArea = document.getElementById('response-area');
-    const cameraFeedContainer = document.querySelector('.camera-feed-container');
-    const attentionIndicator = document.querySelector('.attention-indicator');
     const emotionDisplay = document.querySelector('.emotion-display');
-    const responseOverlay = document.querySelector('.response-overlay');
-    const responseText = document.getElementById('response-text');
+    const videoInfoPanel = document.getElementById('videoInfoPanel');
+    const musicPlayer = document.getElementById('musicPlayer');
+    const playPauseButton = document.getElementById('playPause');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const progressBar = document.getElementById('progressBar');
+    const volumeControl = document.getElementById('volumeControl');
+    let completedActions = [];
+    let audio;
+    let audioContext;
+    let analyser;
+    let dataArray;
+
+    // Функция для начала воспроизведения музыки
+    window.startMusic = function(url) {
+        if (audio) {
+            audio.pause();
+            audio.currentTime = 0;
+        }
+        audio = new Audio(url);
+        audio.crossOrigin = "anonymous";
+        if (audio) {
+            audio.addEventListener('timeupdate', () => {
+                progressBar.max = audio.duration;
+                console.log(audio.duration)
+                targetSpeechAmplitude = getCurrentAmplitude();
+                console.log(getCurrentAmplitude())
+                progressBar.value = audio.currentTime;
+            });
+
+            audio.addEventListener('ended', () => {
+                playIcon.style.display = 'inline';
+                pauseIcon.style.display = 'none';
+            });
+        }
+        musicPlayer.classList.add('active');
+        playIcon.style.display = 'none';
+        pauseIcon.style.display = 'inline';
+        audio.play();
+        // Инициализация Web Audio API
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaElementSource(audio);
+            analyser = audioContext.createAnalyser();
+            analyser.fftSize = 256; // Размер FFT для анализа (влияет на детализацию)
+            const bufferLength = analyser.frequencyBinCount;
+            dataArray = new Uint8Array(bufferLength);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+        }
+    };
+
+    window.getCurrentAmplitude = function() {
+        if (analyser) {
+            analyser.getByteTimeDomainData(dataArray);
+            let sum = 0;
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += Math.abs(dataArray[i] - 128); // Нормализация к 0
+            }
+            return sum / dataArray.length; // Средняя амплитуда
+        }
+        return 0;
+    };
+
+    playPauseButton.addEventListener('click', () => {
+        if (audio) {
+            if (audio.paused) {
+                audio.play();
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'inline';
+            } else {
+                audio.pause();
+                playIcon.style.display = 'inline';
+                pauseIcon.style.display = 'none';
+            }
+        }
+    });
+
+    progressBar.addEventListener('input', () => {
+        if (audio) {
+            audio.currentTime = progressBar.value;
+        }
+    });
+
+    volumeControl.addEventListener('input', () => {
+        if (audio) {
+            audio.volume = volumeControl.value;
+        }
+    });
+
+    // Функция для отображения панели информации
+    function showVideoInfo(title, date, authorIconSrc, authorName, description) {
+        document.getElementById('dynamicVideoTitle').textContent = title;
+        document.getElementById('dynamicVideoMeta').textContent = `${date} - ${authorName}`;
+        document.getElementById('dynamicAuthorIcon').innerHTML = `<img src="${authorIconSrc}" alt="${authorName}">`;
+        document.getElementById('dynamicVideoDescription').textContent = description;
+        videoInfoPanel.classList.add('active');
+    }
+
+    // Функция для скрытия панели информации (если нужно)
+    function hideVideoInfo() {
+        videoInfoPanel.classList.remove('active');
+    }
+    //const responseOverlay = document.querySelector('.response-overlay');
+    //const responseText = document.getElementById('response-text');
 
     // Пример, когда ИИ слушает
     function startListening() {
-        cameraFeedContainer.classList.add('listening');
+        setAIState('listening');
     }
 
     // Пример, когда ИИ заканчивает слушать
     function stopListening() {
-        cameraFeedContainer.classList.remove('listening');
+        setAIState('idle');
     }
 
     // Пример изменения эмоции
@@ -26,8 +126,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Пример отображения ответа
     function showResponse(text) {
-        responseText.innerText = text;
-        responseOverlay.classList.add('responding');
+        console.log(text)
+        //responseText.innerText = text;
+        //responseOverlay.classList.add('responding');
     }
 
     let stream;
@@ -40,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentMainSentenceIndex = 0;
     let currentFastSentenceIndex = 0;
     let isSpeaking = false;
-    let isTalking = false;
+    let isTalking = true;
     let currentAudio = null;
     let mainStreamEnded = false; // Флаг, чтобы отслеживать окончание потока main
 
@@ -56,26 +157,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         try {
-            // Отправка текста на сервер
-            const response = await fetch("https://spark-realtime-api.up.railway.app/" + 'stream-audio', {
+            const response = await fetch('https://spark-realtime-api.up.railway.app/stream-audio', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({text})
+                body: JSON.stringify({ text: text })
             });
 
             if (!response.ok) {
-                console.error("error in server");
-                if (onEndCallback) {
-                    onEndCallback();
-                }
-                return;
+                const errorData = await response.json();
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error || 'Unknown error'}`);
             }
 
-            // Чтение аудио потока и воспроизведение
             const audioBlob = await response.blob();
             const audioUrl = URL.createObjectURL(audioBlob);
+
             const audio = new Audio(audioUrl);
             currentAudio = audio; // Сохраняем аудио объект в глобальной переменной
             try {
@@ -102,19 +199,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     for (let i = 0; i < bufferLength; i++) {
                         const value = (dataArray[i] - 128) / 128; // Нормализуем
                         sum += value * value; // Квадрат амплитуды
-                    }
 
-                    if (sum > 0.2) {
-                        cameraFeedContainer.classList.add('speaking');
-                    }
-                    else {
-                        cameraFeedContainer.classList.remove('speaking');
+                        targetSpeechAmplitude = sum / 4;
                     }
 
                     if (!audio.paused) {
                         requestAnimationFrame(analyzeAmplitude); // Продолжаем анализ
                     }
                 }
+
 
                 // Запуск анализа при старте воспроизведения
                 audio.addEventListener('play', () => {
@@ -124,12 +217,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await audio.play();
                 audio.addEventListener('timeupdate', () => {
                     const remainingTime = audio.duration - audio.currentTime;
-                    if (remainingTime <= 1.6 && !audio.actionExecuted) {
+                    console.log(remainingTime);
+                    if (remainingTime <= 1 && !audio.actionExecuted) {
                         // Выполняем действие за секунду до завершения
                         audio.actionExecuted = true; // Устанавливаем флаг, чтобы действие выполнялось только один раз
-                        if (onEndCallback) {
-                            onEndCallback();
-                        }
+                        onEndCallback();
                     }
                 });
 
@@ -138,15 +230,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             } catch (error) {
                 console.error(error);
-                if (onEndCallback) {
-                    onEndCallback();
-                }
-            }
-        } catch (error) {
-            console.error(error);
-            if (onEndCallback) {
                 onEndCallback();
             }
+
+        } catch (error) {
+            console.error('Error during synthesis:', error);
+            alert('Failed to synthesize speech. See console for details.');
         }
     }
 
@@ -178,7 +267,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             isSpeaking = false;
             if (lastMessage) isTalking = false;
             console.log("ended speaking tts");
-            responseOverlay.classList.remove('responding');
+            //responseOverlay.classList.remove('responding');
             if (onEndCallback) {
                 onEndCallback();
             }
@@ -216,6 +305,40 @@ document.addEventListener('DOMContentLoaded', async () => {
             video.srcObject = stream;
         })
         .catch(err => console.error('Ошибка доступа к камере:', err));
+
+    const parseRequests = (input) => {
+        // Регулярное выражение для поиска всех действий и аргументов
+        const regex = /\[([a-zA-Z-]+):"([^"]*)"\]/g;
+
+        // Поиск всех совпадений
+        const matches = input.matchAll(regex);
+
+        // Преобразуем итератор в массив объектов
+        const results = [];
+        for (const match of matches) {
+            results.push({
+                action: match[1],
+                argument: match[2],
+            });
+        }
+
+        return results;
+    };
+
+    function completeActions(actions = []){
+        completedActions = actions;
+        for (let action of actions){
+            if (action.action === "play_music"){
+                playMusic(action.argument)
+            } else if (action.action === "play_video"){
+                playVideo(action.argument)
+            }
+        }
+    }
+
+    function removeBracketContent(str) {
+        return str.replace(/\[.*?\]/g, '');
+    }
 
     async function sendAiMessage(text) {
         if (!text.trim()) {
@@ -264,40 +387,45 @@ document.addEventListener('DOMContentLoaded', async () => {
             const decoder = new TextDecoder();
 
             let fullResponse = '';
-            cameraFeedContainer.classList.remove('loading');
+            let currentMainContent = ""; // Накапливаем текст для main
+            let currentFastContent = ""; // Накапливаем текст для fast
+            setAIState('speaking');
             while (true) {
                 const {done, value} = await reader.read();
                 if (done) {
-                    mainStreamEnded = true; // Устанавливаем флаг, когда поток от сервера закрыт
+                    mainStreamEnded = true;
+                    // После завершения потока добавляем оставшийся накопленный текст как предложение
+                    if (currentMainContent.trim()) {
+                        mainResponseSentences.push(currentMainContent.trim());
+                    }
+                    if (currentFastContent.trim()) {
+                        fastResponseSentences.push(currentFastContent.trim());
+                    }
                     break;
                 }
                 const textChunk = decoder.decode(value, {stream: true});
                 fullResponse += textChunk;
 
-                let currentMainContent = "";
-                let currentFastContent = "";
-
                 textChunk.split('\n').forEach(line => {
                     if (line.startsWith('main:')) {
                         currentMainContent += line.substring(5) + " ";
+                        // Разделяем на предложения и добавляем полные
                         const sentences = currentMainContent.split(/(?<=[.?!])\s+/).filter(s => s.trim());
-                        mainResponseSentences.push(...sentences.slice(0, sentences.length - (sentences.at(-1) ? 1 : 0))); // Добавляем все, кроме последнего, если он есть
-                        currentMainContent = sentences.at(-1) || ""; // Сохраняем последний элемент или пустую строку
+                        mainResponseSentences.push(...sentences.slice(0, sentences.length - (sentences.at(-1) ? 1 : 0)));
+                        currentMainContent = sentences.at(-1) || ""; // Оставляем незаконченное предложение для следующего фрагмента
+                        if (parseRequests(currentMainContent) && parseRequests(currentMainContent) !== completedActions){
+                            completeActions(parseRequests(currentMainContent))
+                        }
+                        currentMainContent = removeBracketContent(currentMainContent);
                     } else if (line.startsWith('fast:')) {
                         currentFastContent += line.substring(5) + " ";
+                        // Разделяем на предложения и добавляем полные
                         const sentences = currentFastContent.split(/(?<=[.?!])\s+/).filter(s => s.trim());
                         fastResponseSentences.push(...sentences.slice(0, sentences.length - (sentences.at(-1) ? 1 : 0)));
-                        currentFastContent = sentences.at(-1) || "";
+                        currentFastContent = sentences.at(-1) || ""; // Оставляем незаконченное предложение для следующего фрагмента
                     }
                 });
 
-// После обработки всех строк, добавляем оставшийся контент, если он есть и является завершенным предложением
-                if (currentMainContent.trim()) {
-                    mainResponseSentences.push(currentMainContent.trim());
-                }
-                if (currentFastContent.trim()) {
-                    fastResponseSentences.push(currentFastContent.trim());
-                }
                 // Запускаем синтез речи, как только получили первые предложения
                 if (!isSpeaking && (mainResponseSentences.length > 0 || (!mainStreamEnded && fastResponseSentences.length > 0))) {
                     processNextSentence();
@@ -394,7 +522,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const context = canvas.getContext('2d');
             context.drawImage(video, 0, 0, canvas.width, canvas.height);
             capturedImageURL = canvas.toDataURL('image/jpeg');
-            await sendAiMessage(transcription)
+            if (transcription !== "Ошибка транскрипции.") await sendAiMessage(transcription)
         } catch (error) {
             console.error('Ошибка при транскрипции:', error);
         }
@@ -405,22 +533,225 @@ document.addEventListener('DOMContentLoaded', async () => {
             onSpeechStart: () => {
                 if (!isTalking) {
                     console.log("Речь началась");
-                    cameraFeedContainer.classList.add('listening');
                     startListening();
                 }
             },
             onSpeechEnd: (audio) => {
                 if (!isTalking) {
                     isTalking = true;
-                    cameraFeedContainer.classList.remove('listening');
-                    cameraFeedContainer.classList.add('loading');
+                    setAIState('thinking');
                     console.log("Речь завершена, обрабатываем аудио.s..");
-                    stopListening();
                     sendAudioForTranscription(audio);
                 }
             },
         });
         vadInstance.start();
+    }
+
+    function formatText(text) {
+        // Удаляем текст внутри звездочек (если removeTextInAsterisks доступна)
+
+        // Разбиваем текст на блоки, разделяя на строки кода и обычный текст
+        const blocks = text.split(/(```[\s\S]*?```)/g);
+
+        return blocks.map(block => {
+            // Форматируем обычный текст
+            block = block
+                .replace(/^##\s*(.*)$/gm, '<h2>$1</h2>') // Заголовки уровня 2
+                .replace(/\*\*(.*?)\*\*/g, '<strong><span class="bold">$1</span></strong>') // Жирный текст
+                .replace(/_(.*?)_/g, '<em>$1</em>') // Курсив
+                .replace(/(?<!\*)\*(?!\*)/g, '<span class="bold">  •</span>') // Маркеры
+                .replace(/\n/g, '<br>'); // Переносы строк
+
+            return block;
+        }).join('');
+    }
+
+    async function playVideo(searchQuery = "Google Pixel 7 Pro MKBHD") {
+        try {
+            const response = await fetch('https://spark-realtime-api.up.railway.app/search', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ searchQuery })
+            });
+
+            if (!response.ok) {
+                const message = `Ошибка HTTP: ${response.status}`;
+                throw new Error(message);
+            }
+
+            const reader = response.body.getReader();
+            const textDecoder = new TextDecoder();
+            let partialData = '';
+
+            let date = "";
+            let authorName = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                    console.log('Поток завершен');
+                    break;
+                }
+
+                partialData += textDecoder.decode(value);
+
+                // Обрабатываем накопленные данные, разделяя по двойному переводу строки
+                const messages = partialData.split('\n\n');
+                partialData = messages.pop(); // Оставляем последний элемент, так как он может быть неполным
+
+                for (const message of messages) {
+                    if (!message.trim()) continue;
+
+                    const lines = message.trim().split('\n');
+                    let eventName = null;
+                    let eventData = null;
+
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            eventName = line.substring('event: '.length).trim();
+                        } else if (line.startsWith('data: ')) {
+                            try {
+                                eventData = JSON.parse(line.substring('data: '.length).trim());
+                            } catch (error) {
+                                console.error('Ошибка парсинга JSON:', error, line);
+                            }
+                        }
+                    }
+
+                    if (eventName && eventData) {
+                        console.log('Получено сообщение:', eventName, eventData);
+                        switch (eventName) {
+                            case 'videoId':
+                                setAIState("displaying", eventData.videoId);
+                                break;
+                            case 'title':
+                                document.getElementById('dynamicVideoTitle').textContent = eventData.title;
+                                break;
+                            case 'creator':
+                                authorName = eventData.creator;
+                                document.getElementById('dynamicVideoMeta').textContent = `${date} - ${authorName}`;
+                                document.getElementById('dynamicAuthorIcon').innerHTML = `<img src="${eventData.creatorThumbnailLink}" alt="${authorName}">`;
+                                break;
+                            case 'date':
+                                date = eventData.date;
+                                document.getElementById('dynamicVideoMeta').textContent = `${date} - ${authorName}`;
+                                document.getElementById('dynamicVideoDescription').textContent = "Подготавливаем краткое содержание...";
+                                videoInfoPanel.classList.add('active');
+                                break;
+                            case 'description':
+                                document.getElementById('description').innerHTML += formatText(eventData.description);
+                                break;
+                            case 'done':
+                                console.log('Получено сообщение о завершении');
+                                reader.releaseLock(); // Освобождаем ридер
+                                return;
+                        }
+                    }
+                }
+            }
+
+            reader.releaseLock(); // Убеждаемся, что ридер освобожден при нормальном завершении
+
+        } catch (error) {
+            console.error('Произошла ошибка:', error);
+        }
+    }
+
+    async function playMusic(searchQuery = "O Children - Nick Cave & The Bad Seeds") {
+        try {
+            const response = await fetch('https://spark-realtime-api.up.railway.app/search-music', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ searchQuery })
+            });
+
+            if (!response.ok) {
+                const message = `Ошибка HTTP: ${response.status}`;
+                throw new Error(message);
+            }
+
+            const reader = response.body.getReader();
+            const textDecoder = new TextDecoder();
+            let partialData = '';
+
+            let date = "";
+            let authorName = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                    console.log('Поток завершен');
+                    break;
+                }
+
+                partialData += textDecoder.decode(value);
+
+                // Обрабатываем накопленные данные, разделяя по двойному переводу строки
+                const messages = partialData.split('\n\n');
+                partialData = messages.pop(); // Оставляем последний элемент, так как он может быть неполным
+
+                for (const message of messages) {
+                    if (!message.trim()) continue;
+
+                    const lines = message.trim().split('\n');
+                    let eventName = null;
+                    let eventData = null;
+
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            eventName = line.substring('event: '.length).trim();
+                        } else if (line.startsWith('data: ')) {
+                            try {
+                                eventData = JSON.parse(line.substring('data: '.length).trim());
+                            } catch (error) {
+                                console.error('Ошибка парсинга JSON:', error, line);
+                            }
+                        }
+                    }
+
+                    if (eventName && eventData) {
+                        console.log('Получено сообщение:', eventName, eventData);
+                        switch (eventName) {
+                            case 'id':
+                                startMusic(eventData.id);
+                                break;
+                            case 'title':
+                                document.getElementById('dynamicVideoTitle').textContent = eventData.title;
+                                break;
+                            case 'creator':
+                                authorName = eventData.creator;
+                                document.getElementById('dynamicVideoMeta').textContent = `${date} - ${authorName}`;
+                                document.getElementById('dynamicAuthorIcon').innerHTML = ``;
+                                break;
+                            case 'date':
+                                date = eventData.date;
+                                document.getElementById('dynamicVideoMeta').textContent = `${date} - ${authorName}`;
+                                break;
+                            case 'description':
+                                document.getElementById('dynamicVideoDescription').innerHTML = formatText(eventData.description);
+                                videoInfoPanel.classList.add('active');
+                                break;
+                            case 'done':
+                                console.log('Получено сообщение о завершении');
+                                reader.releaseLock(); // Освобождаем ридер
+                                return;
+                        }
+                    }
+                }
+            }
+
+            reader.releaseLock(); // Убеждаемся, что ридер освобожден при нормальном завершении
+
+        } catch (error) {
+            console.error('Произошла ошибка:', error);
+        }
     }
 
 // Initialize VAD

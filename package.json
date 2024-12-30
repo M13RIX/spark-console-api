@@ -89,6 +89,8 @@
     "unirest": "^0.6.0",
     "uuid": "^10.0.0",
     "wikipedia": "^2.1.2",
-    "ws": "^8.17.0"
+    "ws": "^8.17.0",
+    "ym-api": "^1.2.1",
+    "youtube-captions-scraper": "^2.0.3"
   }
 }
