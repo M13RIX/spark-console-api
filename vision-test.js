@@ -35,7 +35,7 @@ let chatHistory = []; // Хранение всей истории чата
 
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public', 'vision')));
 
 // Настройка multer для обработки multipart/form-data (файлы и текст)
 const storage = multer.diskStorage({
