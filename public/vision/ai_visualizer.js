@@ -242,12 +242,16 @@ function setAIState(newState, youtubeId = null) {
     // Установка целевой интенсивности свечения
     if (newState === 'speaking') {
         targetGlowIntensity = 50;
+        youtubePlayerContainer.style.opacity = 0;
     } else if (newState === 'thinking') {
         targetGlowIntensity = 45;
+        youtubePlayerContainer.style.opacity = 0;
     } else if (newState === 'listening') {
         targetGlowIntensity = 40;
+        youtubePlayerContainer.style.opacity = 0;
     } else if (newState === 'searching') {
         targetGlowIntensity = 42;
+        youtubePlayerContainer.style.opacity = 0;
     } else if (newState === 'displaying' && youtubeId) {
         targetGlowIntensity = 42;
         youtubePlayerContainer.style.opacity = 1;

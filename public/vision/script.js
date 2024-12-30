@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let audioContext;
     let analyser;
     let dataArray;
+    let currentLastId;
+    let currentMainId;
 
     // Функция для начала воспроизведения музыки
     window.startMusic = function(url) {
@@ -93,11 +95,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Функция для отображения панели информации
-    function showVideoInfo(title, date, authorIconSrc, authorName, description) {
-        document.getElementById('dynamicVideoTitle').textContent = title;
-        document.getElementById('dynamicVideoMeta').textContent = `${date} - ${authorName}`;
-        document.getElementById('dynamicAuthorIcon').innerHTML = `<img src="${authorIconSrc}" alt="${authorName}">`;
-        document.getElementById('dynamicVideoDescription').textContent = description;
+    function displayText(description) {
+        document.getElementById('dynamicVideoTitle').innerHTML = "";
+        document.getElementById('dynamicVideoMeta').innerHTML = ``;
+        document.getElementById('dynamicAuthorIcon').innerHTML = ``;
+        document.getElementById('dynamicVideoDescription').innerHTML = formatText(description);
         videoInfoPanel.classList.add('active');
     }
 
@@ -265,7 +267,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         showResponse(clearText);
         tts(clearText, () => {
             isSpeaking = false;
-            if (lastMessage) isTalking = false;
+            if (lastMessage) {
+                isTalking = false;
+                setAIState("idle");
+            }
             console.log("ended speaking tts");
             //responseOverlay.classList.remove('responding');
             if (onEndCallback) {
@@ -308,15 +313,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function parseRequests(text) {
         const actions = [];
-        // Обновленное регулярное выражение для обработки пробелов после открывающей скобки
-        const actionRegex = /\[\s*(play_music|play_video):\s*"([^"]*)"\]|\[\s*(play_music|play_video):\s*'([^']*)'\]|\[\s*(play_music|play_video):\s*([^\]]*)\]/gi;
+        // Обновленное регулярное выражение, включающее новые действия
+        const actionRegex = /\[\s*(play_music|play_video):\s*"([^"]*)"\]|\[\s*(play_music|play_video):\s*'([^']*)'\]|\[\s*(play_music|play_video):\s*([^\]]*)\]|\[\s*stop_playing:\s*"stop"\]|\[\s*display_text:\s*"([^"]*)"\]|\[\s*display_text:\s*'([^']*)'\]|\[\s*display_text:\s*([^\]]*)\]/gi;
         let match;
 
         while ((match = actionRegex.exec(text)) !== null) {
-            if (match[1] || match[4] || match[7]) {
-                const actionName = (match[1] || match[4] || match[7]);
-                let argument = match[2] || match[5] || match[6];
-                actions.push({ action: actionName, argument: argument.trim() });
+            if (match[1]) { // play_music с двойными кавычками
+                actions.push({ action: 'play_music', argument: match[2].trim() });
+            } else if (match[4]) { // play_music с одинарными кавычками
+                actions.push({ action: 'play_music', argument: match[5].trim() });
+            } else if (match[7]) { // play_music без кавычек
+                actions.push({ action: 'play_music', argument: match[8].trim() });
+            } else if (match[9]) { // stop_playing
+                actions.push({ action: 'stop_playing', argument: 'stop' });
+            } else if (match[10]) { // display_text с двойными кавычками
+                actions.push({ action: 'display_text', argument: match[11].trim() });
+            } else if (match[12]) { // display_text с одинарными кавычками
+                actions.push({ action: 'display_text', argument: match[13].trim() });
+            } else if (match[14]) { // display_text без кавычек
+                actions.push({ action: 'display_text', argument: match[15].trim() });
             }
         }
 
@@ -330,6 +345,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 playMusic(action.argument)
             } else if (action.action === "play_video"){
                 playVideo(action.argument)
+            } else if (action.action === "stop_playing"){
+                audio.pause();
+                hideVideoInfo();
+                musicPlayer.classList.remove('active');
+            } else if (action.action === "display_text"){
+                displayText(action.argument);
             }
         }
     }
@@ -430,6 +451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!isSpeaking && (mainResponseSentences.length > 0 || (!mainStreamEnded && fastResponseSentences.length > 0))) {
                     processNextSentence();
                 }
+                console.log(mainResponseSentences)
             }
 
             // После завершения обработки потока, убедимся, что произносится только main
@@ -716,11 +738,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
 
+                    let id = -1;
+
                     if (eventName && eventData) {
                         console.log('Получено сообщение:', eventName, eventData);
                         switch (eventName) {
                             case 'id':
-                                startMusic(eventData.id);
+                                id = eventData.id;
+                                console.log("Задаем ID:",id)
+                                startMusic(eventData.string);
                                 break;
                             case 'title':
                                 document.getElementById('dynamicVideoTitle').textContent = eventData.title;
@@ -737,7 +763,115 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 break;
                             case 'description':
                                 document.getElementById('dynamicVideoDescription').innerHTML = formatText(eventData.description);
+                                console.log('Получено сообщение о завершении');
+                                audio.addEventListener('timeupdate', () => {
+                                    const remainingTime = audio.duration - audio.currentTime;
+                                    console.log("время: " + remainingTime)
+                                    if (remainingTime <= 5 && !audio.actionExecuted) {
+                                        musicPlayer.classList.remove('active');
+                                        audio.actionExecuted = true; // Устанавливаем флаг, чтобы действие выполнялось только один раз
+                                        console.log("Читаем ID:",id)
+                                        playNextMusic(-1, eventData.id);
+                                    }
+                                });
+                                reader.releaseLock(); // Освобождаем ридер
+                                return;
+                            case 'done':
+                                console.log('Получено сообщение о завершении');
+                                reader.releaseLock(); // Освобождаем ридер
+                                return;
+                        }
+                    }
+                }
+            }
+
+            reader.releaseLock(); // Убеждаемся, что ридер освобожден при нормальном завершении
+
+        } catch (error) {
+            console.error('Произошла ошибка:', error);
+        }
+    }
+
+    async function playNextMusic(lastId, mainId) {
+        try {
+            const response = await fetch('https://spark-realtime-api.up.railway.app/next-music', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ mainId: mainId, lastId: lastId })
+            });
+
+            if (!response.ok) {
+                const message = `Ошибка HTTP: ${response.status}`;
+                throw new Error(message);
+            }
+
+            const reader = response.body.getReader();
+            const textDecoder = new TextDecoder();
+            let partialData = '';
+
+            let date = "";
+            let authorName = "";
+
+            while (true) {
+                const { done, value } = await reader.read();
+
+                if (done) {
+                    console.log('Поток завершен');
+                    break;
+                }
+
+                partialData += textDecoder.decode(value);
+
+                // Обрабатываем накопленные данные, разделяя по двойному переводу строки
+                const messages = partialData.split('\n\n');
+                partialData = messages.pop(); // Оставляем последний элемент, так как он может быть неполным
+
+                for (const message of messages) {
+                    if (!message.trim()) continue;
+
+                    const lines = message.trim().split('\n');
+                    let eventName = null;
+                    let eventData = null;
+                    let newMainId = -1;
+                    let newLastId = -1;
+
+                    for (const line of lines) {
+                        if (line.startsWith('event: ')) {
+                            eventName = line.substring('event: '.length).trim();
+                        } else if (line.startsWith('data: ')) {
+                            try {
+                                eventData = JSON.parse(line.substring('data: '.length).trim());
+                            } catch (error) {
+                                console.error('Ошибка парсинга JSON:', error, line);
+                            }
+                        }
+                    }
+
+                    if (eventName && eventData) {
+                        console.log('Получено сообщение:', eventName, eventData);
+                        switch (eventName) {
+                            case 'id':
+                                startMusic(eventData.id);
                                 break;
+                            case 'lastId':
+                                newLastId = eventData.currentTrackID;
+                                break;
+                            case 'mainId':
+                                newMainId = eventData.newMainId
+                                console.log('Получено сообщение о завершении');
+                                audio.addEventListener('timeupdate', () => {
+                                    const remainingTime = audio.duration - audio.currentTime;
+                                    console.log(remainingTime);
+                                    if (remainingTime <= 5 && !audio.actionExecuted) {
+                                        musicPlayer.classList.remove('active');
+                                        audio.actionExecuted = true; // Устанавливаем флаг, чтобы действие выполнялось только один раз
+                                        playNextMusic(eventData.currentTrackID, eventData.newMainId);
+                                    }
+                                });
+                                reader.releaseLock(); // Освобождаем ридер
+                                return;
                             case 'done':
                                 console.log('Получено сообщение о завершении');
                                 reader.releaseLock(); // Освобождаем ридер
