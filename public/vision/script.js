@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentMainSentenceIndex = 0;
     let currentFastSentenceIndex = 0;
     let isSpeaking = false;
-    let isTalking = true;
+    let isTalking = false;
     let currentAudio = null;
     let mainStreamEnded = false; // Флаг, чтобы отслеживать окончание потока main
 
@@ -306,24 +306,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         })
         .catch(err => console.error('Ошибка доступа к камере:', err));
 
-    const parseRequests = (input) => {
-        // Регулярное выражение для поиска всех действий и аргументов
-        const regex = /\[([a-zA-Z-]+):"([^"]*)"\]/g;
+    function parseRequests(text) {
+        const actions = [];
+        // Обновленное регулярное выражение для обработки пробелов после открывающей скобки
+        const actionRegex = /\[\s*(play_music|play_video):\s*"([^"]*)"\]|\[\s*(play_music|play_video):\s*'([^']*)'\]|\[\s*(play_music|play_video):\s*([^\]]*)\]/gi;
+        let match;
 
-        // Поиск всех совпадений
-        const matches = input.matchAll(regex);
-
-        // Преобразуем итератор в массив объектов
-        const results = [];
-        for (const match of matches) {
-            results.push({
-                action: match[1],
-                argument: match[2],
-            });
+        while ((match = actionRegex.exec(text)) !== null) {
+            if (match[1] || match[4] || match[7]) {
+                const actionName = (match[1] || match[4] || match[7]);
+                let argument = match[2] || match[5] || match[6];
+                actions.push({ action: actionName, argument: argument.trim() });
+            }
         }
 
-        return results;
-    };
+        return actions;
+    }
 
     function completeActions(actions = []){
         completedActions = actions;
@@ -409,13 +407,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 textChunk.split('\n').forEach(line => {
                     if (line.startsWith('main:')) {
                         currentMainContent += line.substring(5) + " ";
+                        console.log(parseRequests(currentMainContent))
+                        console.log(currentMainContent)
+                        if (parseRequests(currentMainContent) && parseRequests(currentMainContent) !== completedActions){
+                            completeActions(parseRequests(currentMainContent))
+                        }
                         // Разделяем на предложения и добавляем полные
                         const sentences = currentMainContent.split(/(?<=[.?!])\s+/).filter(s => s.trim());
                         mainResponseSentences.push(...sentences.slice(0, sentences.length - (sentences.at(-1) ? 1 : 0)));
                         currentMainContent = sentences.at(-1) || ""; // Оставляем незаконченное предложение для следующего фрагмента
-                        if (parseRequests(currentMainContent) && parseRequests(currentMainContent) !== completedActions){
-                            completeActions(parseRequests(currentMainContent))
-                        }
                         currentMainContent = removeBracketContent(currentMainContent);
                     } else if (line.startsWith('fast:')) {
                         currentFastContent += line.substring(5) + " ";
@@ -643,7 +643,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 videoInfoPanel.classList.add('active');
                                 break;
                             case 'description':
-                                document.getElementById('description').innerHTML += formatText(eventData.description);
+                                document.getElementById('dynamicVideoDescription').innerHTML = formatText(eventData.description);
                                 break;
                             case 'done':
                                 console.log('Получено сообщение о завершении');
@@ -733,10 +733,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             case 'date':
                                 date = eventData.date;
                                 document.getElementById('dynamicVideoMeta').textContent = `${date} - ${authorName}`;
+                                videoInfoPanel.classList.add('active');
                                 break;
                             case 'description':
                                 document.getElementById('dynamicVideoDescription').innerHTML = formatText(eventData.description);
-                                videoInfoPanel.classList.add('active');
                                 break;
                             case 'done':
                                 console.log('Получено сообщение о завершении');

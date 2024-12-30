@@ -24,7 +24,7 @@ let transitionProgress = 0;
 const transitionDuration = 300;
 let speechAmplitude = 0;
 let targetSpeechAmplitude = 0;
-const amplitudeSmoothFactor = 0.99;
+const amplitudeSmoothFactor = 0.2;
 
 const circles = [];
 
