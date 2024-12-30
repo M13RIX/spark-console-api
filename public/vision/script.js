@@ -803,7 +803,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
 
             if (!response.ok) {
-                const message = `Ошибка HTTP: ${response.status}`;
+                const message = `Ошибка  HTTP: ${response.status}`;
                 throw new Error(message);
             }
 
