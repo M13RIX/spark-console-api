@@ -93,6 +93,7 @@
     "wikipedia": "^2.1.2",
     "ws": "^8.17.0",
     "ym-api": "^1.2.1",
+    "ym-api-meowed": "^1.3.5",
     "youtube-captions-scraper": "^2.0.3"
   }
 }
