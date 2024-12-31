@@ -884,7 +884,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             reader.releaseLock(); // Убеждаемся, что ридер освобожден при нормальном завершении
 
         } catch (error) {
-            console.error('Произошла ошибка:', error);
+            console.error('Произошла  ошибка:', error);
         }
     }
 
