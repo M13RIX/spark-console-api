@@ -27,8 +27,8 @@ const genAI = new GoogleGenerativeAI(apiKey);
 const fileManager = new GoogleAIFileManager(apiKey);
 
 PlayHT.init({
-    userId: 'jbCHIFCGZlZujhl9tzg4DJohC093', //2X1lbrY2FXTLvJjDcG0RCzc1iyC3 или mtJM3yaZ9wbqMHN0GqZ5vTC51BB2
-    apiKey: 'ac17981427754a22b4fe9fc5a096c0c6', //f599061a1033401c97e75093a3685995 или 0d26b269fd74470086cc0284f343cdc6
+    userId: 'V102ffxNhreA76RQPSG8QF9LGQ33', //2X1lbrY2FXTLvJjDcG0RCzc1iyC3 или mtJM3yaZ9wbqMHN0GqZ5vTC51BB2 или jbCHIFCGZlZujhl9tzg4DJohC093
+    apiKey: 'e31b357d3a694310a30c39decc2ceba2', //f599061a1033401c97e75093a3685995 или 0d26b269fd74470086cc0284f343cdc6 или ac17981427754a22b4fe9fc5a096c0c6
 });
 
 let chatHistory = []; // Хранение всей истории чата
