@@ -308,16 +308,16 @@ app.post('/process-image', upload.single('image'), async (req, res) => {
                     }
                 }
                 if (!isMain) {
+                    res.write(`fast:${chunkText}`); // Помечаем быстрый ответ
+                } else {
                     if (isFinal){
-                        res.write(`fast:${chunkText}`); // Помечаем быстрый ответ
+                        res.write(`main:${chunkText}`); // Помечаем основной ответ
                     } else {
                         if (chunk.candidates[0].content.parts.length > 1){
                             isFinal = true;
-                            res.write(`fast:${chunk.candidates[0].content.parts[1].text}`);
+                            res.write(`main:${chunk.candidates[0].content.parts[1].text}`);
                         }
                     }
-                } else {
-                    res.write(`main:${chunkText}`); // Помечаем основной ответ
                 }
             }
             if (buffer) {
