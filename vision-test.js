@@ -123,31 +123,27 @@ app.post('/stream-audio', async (req, res) => {
             seed: 0.9,
         });
 
-        res.setHeader('Content-Type', 'audio/aac'); // Set the content-type header
-        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        res.setHeader('Pragma', 'no-cache');
-        res.setHeader('Expires', '0');
-        res.setHeader('Transfer-Encoding', 'chunked'); // Indicate chunked transfer
+        // Устанавливаем Content-Type
+        res.setHeader('Content-Type', 'audio/aac');
 
-        stream.on('data', (chunk) => {
-            res.write(chunk); // Send each chunk to the client
-        });
+        // Просто "пайпим" поток PlayHT напрямую в response
+        stream.pipe(res);
 
         stream.on('end', () => {
             console.log('PlayHT stream ended');
-            res.end();
+            // res.end() вызывается автоматически после pipe
         });
 
         stream.on('error', (error) => {
             console.error('Error from PlayHT stream:', error);
+            // Важно отправить ошибку клиенту
             res.status(500).send({ error: 'Failed to generate audio' });
-            res.end();
         });
 
     } catch (error) {
         console.error('Error calling PlayHT API:', error);
         res.status(500).send({ error: 'Failed to generate audio' });
-        res.end();
+        // res.end() не нужен, т.к. send уже завершает response
     }
 });
 
