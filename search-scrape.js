@@ -1,10 +1,6 @@
 const axios = require('axios'); // Убедитесь, что axios установлен (npm install axios)
 
 async function googleSearch(query) {
-    const API_KEY = 'AIzaSyBsI4hVl4qeKOwSzLgoHoEINeONPe8AZTQ'; // Замените на ваш API-ключ Google Custom Search
-    const CX = 'c5e231d3f71424c5f'; // Замените на ваш идентификатор поисковой системы
-
-    const url = `https://www.googleapis.com/customsearch/v1`;
 
     try {
         const response = await axios.get(url, {
